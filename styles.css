@@ -940,161 +940,24 @@ a.btn { text-decoration: none; }
   .modal-body, .modal-head { padding-left: 20px; padding-right: 20px; }
 }
 
-/* ---------- Ranking (paleta sobria Black Sheep) ---------- */
+/* ---------- Ranking (Arena 3D oficial con 3 personajes en el podio) ---------- */
 .page-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-
-.rk-hero {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  align-items: center;
-  gap: 28px;
-  padding: 24px 30px;
-  margin-bottom: 18px;
+.rk-arena-head { margin-bottom: 14px; }
+.rk-arena-wrap {
+  padding: 0;
+  overflow: hidden;
   border-color: rgba(176, 141, 87, .35);
-  background:
-    radial-gradient(ellipse 55% 70% at 18% 50%, rgba(176, 141, 87, .12), transparent 70%),
-    var(--surface);
+  background: #0b0b0c;
 }
-.rk-mascot-stage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 260px;
-}
-.rk-mascot-stage canvas {
-  width: 245px;
-  height: 272px;
+.rk-arena-frame {
   display: block;
+  width: 100%;
+  height: calc(100vh - 150px);
+  min-height: 760px;
+  border: 0;
+  background: #0b0b0c;
 }
-.rk-hero-info { min-width: 0; }
-.rk-badge-top {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  border: 1px solid rgba(176, 141, 87, .35);
-  font: 700 11px/1 var(--display);
-  letter-spacing: .16em;
-  text-transform: uppercase;
-  color: var(--accent);
-}
-.rk-badge-top small {
-  color: var(--ink-2);
-  font-weight: 500;
-  letter-spacing: .06em;
-  text-transform: none;
-}
-.rk-leader-name {
-  font: 800 30px/1.15 var(--display);
-  margin: 12px 0 4px;
-  letter-spacing: -.01em;
-}
-.rk-leader-sub {
-  margin: 0 0 20px;
-  color: var(--ink-2);
-  font-size: 14px;
-}
-.rk-leader-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  padding-top: 18px;
-  border-top: 1px solid var(--line);
-}
-.rk-leader-stats span {
-  display: block;
-  font: 600 11px/1.2 var(--display);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-.rk-leader-stats b {
-  font: 800 22px/1.1 var(--display);
-}
-.rk-leader-stats b.gold, .rk-pod-ap b.gold, td b.gold { color: var(--accent); }
-
-.rk-podium-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-}
-.rk-pod-card {
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.rk-pod-card.rk-pos-1 { border-color: rgba(176, 141, 87, .45); }
-.rk-pod-card.is-me, tr.rk-row-me td { background: rgba(176, 141, 87, .05); }
-.rk-pod-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-}
-.rk-medal {
-  font: 800 12px/1 var(--display);
-  letter-spacing: .1em;
-  padding: 5px 10px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  border: 1px solid var(--line-2);
-  color: var(--ink-2);
-}
-.rk-pos-1 .rk-medal {
-  background: var(--accent-soft);
-  border-color: rgba(176, 141, 87, .45);
-  color: var(--accent);
-}
-.rk-pod-who {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.rk-pod-who b { display: block; font-size: 15px; }
-.rk-pod-ap {
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-.rk-pod-ap span {
-  font: 600 11px/1 var(--display);
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.rk-pod-ap b { font: 800 19px/1 var(--display); }
-
-.rk-col-pos { width: 56px; }
-.rk-pos-pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font: 700 12px/1 var(--display);
-  background: var(--surface-2);
-  border: 1px solid var(--line-2);
-  color: var(--ink-2);
-}
-.rk-pos-pill.pos-1 {
-  background: var(--accent-soft);
-  border-color: rgba(176, 141, 87, .5);
-  color: var(--accent);
-}
-.rk-pos-pill.pos-2 { border-color: rgba(180, 179, 174, .45); color: var(--ink); }
-.rk-pos-pill.pos-3 { border-color: rgba(176, 141, 87, .28); color: var(--ink-2); }
-.rk-col-bar { width: 28%; min-width: 120px; }
-
 @media (max-width: 760px) {
-  .rk-hero { grid-template-columns: 1fr; text-align: center; padding: 22px 18px; gap: 14px; }
-  .rk-leader-stats { grid-template-columns: 1fr; gap: 12px; text-align: left; }
-  .rk-podium-grid { grid-template-columns: 1fr; }
+  .rk-arena-frame { height: calc(100vh - 120px); min-height: 680px; }
 }
 

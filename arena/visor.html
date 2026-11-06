@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Visor de ovejas 3D · Black Sheep</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; --oro: #e2c48d; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0b0b0c; color: #f6f5f2; font: 15px/1.5 "Inter", system-ui, sans-serif; }
+    header { padding: 18px 24px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+    h1 { margin: 0; font: 900 20px "Archivo", sans-serif; letter-spacing: .12em; }
+    header p { margin: 0; color: #9a988f; }
+    .fila { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 0 24px 24px; }
+    .carta { background: #121214; border: 1px solid #26262a; border-radius: 16px; overflow: hidden; }
+    .carta h2 { margin: 0; padding: 12px 16px; font: 700 14px "Archivo", sans-serif; letter-spacing: .1em; color: var(--oro); text-transform: uppercase; }
+    .lienzo { position: relative; aspect-ratio: 3 / 4; background: radial-gradient(circle at 50% 35%, #2a2418, #0b0b0c 70%); cursor: grab; }
+    .lienzo canvas { width: 100%; height: 100%; display: block; }
+    .lienzo span { position: absolute; left: 12px; bottom: 10px; font-size: 12px; color: #9a988f; }
+    .ref { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid #26262a; }
+    .ref img { width: 84px; height: 84px; object-fit: contain; background: #1b1b1f; border-radius: 10px; }
+    .ref small { color: #9a988f; }
+    @media (max-width: 900px) { .fila { grid-template-columns: 1fr; } }
+  </style>
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>OVEJAS 3D</h1>
+    <p>Arrastra para girar · rueda para acercar · abajo, tu imagen original para comparar</p>
+  </header>
+  <div class="fila">
+    <section class="carta"><h2>TOP 1 · Dorada</h2><div class="lienzo" data-m="oveja-1"><span>girando…</span></div>
+      <div class="ref"><img src="assets/oveja-1.webp" alt=""><small>Tu imagen original</small></div></section>
+    <section class="carta"><h2>TOP 2 · Morada</h2><div class="lienzo" data-m="oveja-2"><span>girando…</span></div>
+      <div class="ref"><img src="assets/oveja-2.webp" alt=""><small>Tu imagen original</small></div></section>
+    <section class="carta"><h2>TOP 3 · Cyber</h2><div class="lienzo" data-m="oveja-3"><span>girando…</span></div>
+      <div class="ref"><img src="assets/oveja-3.webp" alt=""><small>Tu imagen original</small></div></section>
+  </div>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const carga = new GLTFLoader();
+    const params = new URLSearchParams(location.search);
+    const version = params.get("v") || Date.now();
+    // visor.html?solo=oveja-1 muestra una sola oveja en grande
+    if (params.get("solo")) {
+      document.querySelectorAll(".lienzo").forEach((c) => { if (c.dataset.m !== params.get("solo")) c.closest(".carta").remove(); });
+      document.querySelector(".fila").style.cssText = "grid-template-columns: minmax(0, 560px); justify-content: center";
+    }
+    document.querySelectorAll(".lienzo").forEach(async (caja) => {
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      caja.prepend(renderer.domElement);
+      const scene = new THREE.Scene();
+      scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(renderer), 0.04).texture;
+      scene.environmentIntensity = 0.6;
+      scene.add(new THREE.HemisphereLight(0xfff2dd, 0x202024, 1.4));
+      const luz = new THREE.DirectionalLight(0xffffff, 1.6);
+      luz.position.set(2, 3, 4);
+      scene.add(luz);
+      const cam = new THREE.PerspectiveCamera(30, 3 / 4, 0.01, 50);
+      const ctl = new OrbitControls(cam, renderer.domElement);
+      ctl.enableDamping = true;
+      ctl.autoRotate = !params.has("quieto");
+      ctl.autoRotateSpeed = 1.2;
+
+      const g = (await carga.loadAsync(`assets/${caja.dataset.m}.glb?v=${version}`)).scene;
+      const box = new THREE.Box3().setFromObject(g), tam = box.getSize(new THREE.Vector3()), centro = box.getCenter(new THREE.Vector3());
+      g.position.sub(centro);
+      scene.add(g);
+      const lado = Math.max(tam.y, tam.x * 1.33);
+      cam.position.set(0, tam.y * 0.1, lado * 2.6);
+      ctl.target.set(0, 0, 0);
+
+      const ajustar = () => {
+        const w = caja.clientWidth, h = caja.clientHeight;
+        renderer.setSize(w, h, false);
+        cam.aspect = w / h;
+        cam.updateProjectionMatrix();
+      };
+      new ResizeObserver(ajustar).observe(caja);
+      ajustar();
+      renderer.domElement.addEventListener("pointerdown", () => { ctl.autoRotate = false; caja.querySelector("span").textContent = "tú lo mueves"; });
+      renderer.setAnimationLoop(() => { ctl.update(); renderer.render(scene, cam); });
+    });
+  </script>
+</body>
+</html>

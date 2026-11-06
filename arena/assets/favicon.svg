@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <mask id="bs-cut">
+      <rect width="64" height="64" fill="#fff"/>
+      <path d="M22 34C22 28.5 26.5 27 32 27S42 28.5 42 34L40.4 46.5C39.6 53 36 57 32 57S24.4 53 23.6 46.5Z" fill="none" stroke="#000" stroke-width="3"/>
+      <ellipse cx="27.2" cy="39" rx="1.7" ry="2.3" fill="#000"/>
+      <ellipse cx="36.8" cy="39" rx="1.7" ry="2.3" fill="#000"/>
+    </mask>
+  </defs>
+  <g mask="url(#bs-cut)" fill="#f6f5f2">
+    <circle cx="20" cy="27" r="9.5"/>
+    <circle cx="32" cy="20" r="11"/>
+    <circle cx="44" cy="27" r="9.5"/>
+    <circle cx="23" cy="16" r="6.5"/>
+    <circle cx="41" cy="16" r="6.5"/>
+    <ellipse cx="13" cy="38" rx="8" ry="3.4" transform="rotate(24 13 38)"/>
+    <ellipse cx="51" cy="38" rx="8" ry="3.4" transform="rotate(-24 51 38)"/>
+    <path d="M22 34C22 28.5 26.5 27 32 27S42 28.5 42 34L40.4 46.5C39.6 53 36 57 32 57S24.4 53 23.6 46.5Z"/>
+  </g>
+</svg>

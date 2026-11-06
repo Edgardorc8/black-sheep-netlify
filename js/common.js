@@ -79,3 +79,4 @@
   window.BSCommon = common;
   window.BSViews = window.BSViews || {};
 })();
+

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arena 3D · Black Sheep</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+    { "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+</head>
+<body>
+  <canvas id="confeti" aria-hidden="true"></canvas>
+
+  <header class="top">
+    <div class="brand">
+      <img class="logo" src="assets/favicon.svg" alt="">
+      <div>
+        <div class="brand-name">BLACK SHEEP</div>
+        <div class="brand-sub" id="titulo">Arena de ventas</div>
+      </div>
+    </div>
+    <div class="periodos" role="tablist" aria-label="Periodo">
+      <button role="tab" data-p="hoy">Hoy</button>
+      <button role="tab" data-p="semana">Semana</button>
+      <button role="tab" data-p="mes" aria-selected="true">Mes</button>
+    </div>
+    <div class="top-der">
+      <span class="vivo" id="vivo"><i></i><span id="vivo-txt">EN VIVO</span></span>
+      <span class="reloj" id="reloj"></span>
+      <button class="icono" id="btn-sonido" title="Sonido al entrar una venta" aria-pressed="false">🔕</button>
+      <button class="icono" id="btn-full" title="Pantalla completa">⛶</button>
+    </div>
+  </header>
+
+  <div class="demo" id="demo" hidden>Modo demo · ventas inventadas. Pon tu SHEET_ID en config.js para ver las reales.</div>
+
+  <div class="hud">
+      <article class="kpi kpi-main">
+        <span class="kpi-label">Prima anual (AP)</span>
+        <strong class="kpi-num" id="k-ap">$0</strong>
+        <span class="kpi-foot" id="k-ap-foot"></span>
+      </article>
+      <article class="kpi">
+        <span class="kpi-label">Pólizas</span>
+        <strong class="kpi-num" id="k-pol">0</strong>
+        <span class="kpi-foot" id="k-pol-foot"></span>
+      </article>
+      <article class="kpi">
+        <span class="kpi-label">Promedio</span>
+        <strong class="kpi-num" id="k-prom">$0</strong>
+        <span class="kpi-foot">AP por póliza</span>
+      </article>
+      <article class="kpi">
+        <span class="kpi-label">Guerreros activos</span>
+        <strong class="kpi-num" id="k-ag">0</strong>
+        <span class="kpi-foot" id="k-ag-foot"></span>
+      </article>
+    </div>
+
+  <section class="arena" id="arena">
+    <canvas id="escena"></canvas>
+    <div class="etiquetas" id="etiquetas"></div>
+    <div class="cargando" id="cargando">Preparando la arena…</div>
+  </section>
+
+  <section class="meta card">
+    <div class="meta-head">
+      <div>
+        <span class="kpi-label">Meta del mes</span>
+        <div class="meta-nums"><strong id="m-act">$0</strong> <span>de <b id="m-meta">$0</b></span></div>
+      </div>
+      <div class="meta-pct" id="m-pct">0%</div>
+    </div>
+    <div class="pista">
+      <div class="relleno" id="m-bar"></div>
+      <img class="oveja" id="m-oveja" src="assets/favicon.svg" alt="">
+      <span class="hito" style="left:25%"></span>
+      <span class="hito" style="left:50%"></span>
+      <span class="hito" style="left:75%"></span>
+    </div>
+    <div class="meta-foot" id="m-foot"></div>
+  </section>
+
+  <main class="grid">
+    <section class="card tropa-card">
+      <div class="card-head">
+        <h2>La tropa · del 4º en adelante</h2>
+        <span class="sub" id="r-sub">por prima anual</span>
+      </div>
+      <ol class="tropa" id="tropa"></ol>
+      <p class="vacio" id="r-vacio" hidden>Aún no hay guerreros fuera del podio en este periodo. ⚔️</p>
+    </section>
+    <aside class="lado">
+      <section class="card">
+        <div class="card-head"><h2>Últimas ventas</h2></div>
+        <ul class="feed" id="feed"></ul>
+      </section>
+      <section class="card">
+        <div class="card-head"><h2>Por compañía</h2></div>
+        <ul class="carriers" id="carriers"></ul>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="ticker" aria-hidden="true"><div class="ticker-in" id="ticker"></div></footer>
+
+  <div class="festejo" id="festejo" hidden>
+    <div class="festejo-card">
+      <div class="festejo-tag">⚔️ ¡NUEVA VENTA! ⚔️</div>
+      <div class="festejo-nombre" id="f-nombre"></div>
+      <div class="festejo-monto" id="f-monto"></div>
+      <div class="festejo-det" id="f-det"></div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
