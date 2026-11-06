@@ -350,9 +350,9 @@
     // Agentes que aún no aceptan la versión vigente de los términos (cuentas viejas o términos nuevos).
     if (me.role !== "admin" && me.termsVersion !== BSCommon.TERMS_VERSION) return renderTermsGate();
     if (view === "admin" && me.role === "admin") return renderAdmin();
-    if (view === "ranking") return renderRanking();
     if (view === "class") return renderClass();
     if (window.BSViews?.[view]) return window.BSViews[view]();
+    if (view === "ranking") return renderRanking();
     if (SOON[view]) return renderSoon(view);
     return renderHome();
   }

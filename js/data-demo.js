@@ -75,6 +75,47 @@
       }
       d.seedAgent = true;
     }
+    if (!d.seedRanking) {
+      const ym = new Date().toISOString().slice(0, 7);
+      const demoTeam = [
+        { username: "valeria.soto", name: "Valeria Soto", email: "valeria@blacksheep.demo", sales: [
+          { client: "Roberto Garza", carrier: "Americo", product: "IUL", monthly: 420, commission: 95, advance: 75, status: "paid", date: `${ym}-04` },
+          { client: "Lucía Herrera", carrier: "Mutual of Omaha", product: "IUL", monthly: 350, commission: 90, advance: 75, status: "issued", date: `${ym}-05` },
+          { client: "Daniel Ríos", carrier: "National Life Group", product: "IUL", monthly: 310, commission: 90, advance: 75, status: "paid", date: `${ym}-06` },
+        ] },
+        { username: "diego.navarro", name: "Diego Navarro", email: "diego@blacksheep.demo", sales: [
+          { client: "Patricia Vega", carrier: "Americo", product: "IUL", monthly: 280, commission: 85, advance: 75, status: "paid", date: `${ym}-03` },
+          { client: "Jorge Salinas", carrier: "Transamerica", product: "Vida a término", monthly: 190, commission: 80, advance: 75, status: "issued", date: `${ym}-05` },
+        ] },
+        { username: "sofia.lara", name: "Sofía Lara", email: "sofia@blacksheep.demo", sales: [
+          { client: "Andrés Cárdenas", carrier: "F&G", product: "IUL", monthly: 260, commission: 85, advance: 75, status: "issued", date: `${ym}-02` },
+        ] },
+      ];
+      d.items ||= {};
+      for (const a of demoTeam) {
+        let u = d.users.find((x) => x.username === a.username);
+        if (!u) {
+          u = { id: uid(), username: a.username, email: a.email, name: a.name, role: "agent", approved: true, passHash: await hash(SEED_AGENT.password), createdAt: Date.now() };
+          d.users.push(u);
+        }
+        const list = ((d.items[u.id] ||= {}).sale ||= []);
+        if (!list.length) {
+          a.sales.forEach((s) => list.push({ id: uid(), ...s, createdAt: Date.now(), updatedAt: Date.now() }));
+        }
+      }
+      // Agrega también ventas iniciales a Carlos Méndez si aún no tiene ninguna
+      const carlos = d.users.find((x) => x.username === SEED_AGENT.username);
+      if (carlos) {
+        const list = ((d.items[carlos.id] ||= {}).sale ||= []);
+        if (!list.length) {
+          list.push(
+            { id: uid(), client: "Miguel Ángel Torres", carrier: "Americo", product: "IUL", monthly: 380, commission: 90, advance: 75, status: "paid", date: `${ym}-04`, createdAt: Date.now(), updatedAt: Date.now() },
+            { id: uid(), client: "Elena Morales", carrier: "Mutual of Omaha", product: "Final Expense", monthly: 210, commission: 85, advance: 75, status: "issued", date: `${ym}-06`, createdAt: Date.now(), updatedAt: Date.now() },
+          );
+        }
+      }
+      d.seedRanking = true;
+    }
     if (!d.modelCalls) {
       // Una llamada de ejemplo con audio de prueba (sin voz) para ver cómo funciona la sección.
       d.modelCalls = [{
