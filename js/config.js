@@ -5,7 +5,10 @@
  * La llave anon es pública (va en la página). NUNCA pegues aquí la llave "service_role" / "secret".
  */
 window.BS_CONFIG = {
-  SUPABASE_URL: "https://vnuirixhrnwhkczbnbnn.supabase.co",
+  // Solo permite ?demo=1 cuando se abre en servidor local (localhost / 127.0.0.1).
+  SUPABASE_URL: /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.search.includes("demo=1")
+    ? ""
+    : "https://vnuirixhrnwhkczbnbnn.supabase.co",
   SUPABASE_ANON_KEY: "sb_publishable_0GlhDdwbZ4HWY-NvPhhvLg_0KDpLLgo",
   // Dominio interno solo para agentes que el administrador crea SIN correo. No se envían correos ahí.
   EMAIL_DOMAIN: "agentes.blacksheep.app",
