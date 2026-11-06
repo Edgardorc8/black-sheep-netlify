@@ -268,7 +268,7 @@ Asesor: {agente}
         ${groups[d].map((c) => {
           const diff = (toDate(c.date, c.time) - now) / 6e4;
           const cls = c.status === "done" ? "done" : c.status === "noanswer" ? "nr" : `${diff < 0 ? "late" : ""} ${diff <= 15 && diff > -60 ? "due" : ""}`;
-          const phone = c.phone ? `<a class="muted-link mono" href="tel:${c.phone}">${esc(c.phone)}</a>` : "";
+          const phone = c.phone ? `<a class="muted-link mono" href="tel:${esc(digits(c.phone))}">${esc(c.phone)}</a>` : "";
           const st = c.status === "done" ? '<span class="tag st-active">Contestó</span>' : c.status === "noanswer" ? '<span class="tag st-disabled">No contestó</span>' : "";
           const acts = c.status === "pending"
             ? `<button class="btn btn-sm btn-ok" data-ans="${c.id}">${ICON.check}<span>Contestó</span></button>
@@ -401,7 +401,7 @@ Asesor: {agente}
       for (const c of due) await saveCall({ ...c, alerted: true });
       const { esc } = BS;
       BS.openModal("⏰ ¡Llamada en 10 minutos!", `
-        <div class="alarm-list">${due.map((c) => `<div><b>${fmt12(c.time)}</b> · ${esc(c.name)} ${c.phone ? `<a class="muted-link mono" href="tel:${c.phone}">${esc(c.phone)}</a>` : ""}${c.note ? `<br><span class="call-note">${esc(c.note)}</span>` : ""}</div>`).join("")}</div>
+        <div class="alarm-list">${due.map((c) => `<div><b>${fmt12(c.time)}</b> · ${esc(c.name)} ${c.phone ? `<a class="muted-link mono" href="tel:${esc(digits(c.phone))}">${esc(c.phone)}</a>` : ""}${c.note ? `<br><span class="call-note">${esc(c.note)}</span>` : ""}</div>`).join("")}</div>
         <div class="modal-foot"><button class="btn" data-close>Entendido</button></div>`, (dlg) => {
         dlg.classList.add("alarm");
         dlg.addEventListener("close", stopAlarm);

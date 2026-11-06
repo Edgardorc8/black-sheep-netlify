@@ -1,0 +1,14 @@
+# Documentación y notas locales (solo en tu PC, no se sube a Git ni a Netlify)
+/DOCS/
+
+# Configuración local de pruebas (para alternar entre modo Demo y modo Supabase sin tocar js/config.js)
+/js/config.local.js
+
+# Variables de entorno y artefactos comunes
+.env
+.env.*
+!.env.example
+node_modules/
+.netlify/
+.DS_Store
+Thumbs.db

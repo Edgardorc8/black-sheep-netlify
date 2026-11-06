@@ -6,6 +6,10 @@
 (function () {
   const cfg = window.BS_CONFIG || {};
   if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY) return;
+  if (!window.supabase?.createClient) {
+    console.error("Supabase SDK no disponible.");
+    return;
+  }
 
   // La sesión se guarda en sessionStorage: al cerrar la página o el navegador, la sesión se cierra.
   const sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
@@ -16,9 +20,24 @@
   const SIGNED_URL_SECONDS = 6 * 60 * 60;
   const siteUrl = () => `${location.origin}${location.pathname}`;
   const PROFILE_COLS = "id, username, name, email, role, approved, disabled, created_at, terms_version, terms_accepted_at";
+  const VIDEO_EXTS = new Set(["mp4", "webm", "mov", "m4v"]);
+  const VIDEO_MIMES = new Set(["video/mp4", "video/webm", "video/quicktime", "video/x-m4v"]);
+  const AUDIO_EXTS = new Set(["mp3", "m4a", "wav", "ogg", "webm", "aac"]);
+  const AUDIO_MIMES = new Set(["audio/mpeg", "audio/mp3", "audio/mp4", "audio/x-m4a", "audio/wav", "audio/x-wav", "audio/ogg", "audio/webm", "audio/aac"]);
+
+  const cleanDbError = (msg = "") => {
+    if (/duplicate key|unique constraint/i.test(msg)) return "Ese registro ya existe.";
+    if (/row-level security|permission denied|insufficient_privilege/i.test(msg)) return "No tienes permiso para realizar esta acción.";
+    if (/violates foreign key|violates check constraint/i.test(msg)) return "Los datos enviados no son válidos.";
+    if (/JWT|token|expired/i.test(msg)) return "Tu sesión expiró. Vuelve a iniciar sesión.";
+    return "No se pudo completar la operación. Intenta de nuevo.";
+  };
 
   const must = ({ data, error }) => {
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.warn("[Supabase]", error.message);
+      throw new Error(cleanDbError(error.message));
+    }
     return data;
   };
   const toUser = (p) => p && { ...p, email: p.email || "", createdAt: p.created_at, termsVersion: p.terms_version || "", termsAcceptedAt: p.terms_accepted_at };
@@ -50,11 +69,15 @@
 
   async function uploadVideo(file) {
     const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+    if (!VIDEO_EXTS.has(ext) || (file.type && !VIDEO_MIMES.has(file.type.toLowerCase()))) {
+      throw new Error("Formato de video no permitido. Usa MP4, WebM o MOV.");
+    }
     const path = `${crypto.randomUUID()}.${ext}`;
-    const { error } = await sb.storage.from("videos").upload(path, file, { contentType: file.type || "video/mp4" });
+    const contentType = VIDEO_MIMES.has((file.type || "").toLowerCase()) ? file.type : "video/mp4";
+    const { error } = await sb.storage.from("videos").upload(path, file, { contentType });
     if (error) throw new Error(/exceeded|too large|maximum/i.test(error.message)
       ? "El video es demasiado pesado para tu plan de Supabase. Comprímelo o usa un enlace."
-      : error.message);
+      : cleanDbError(error.message));
     return path;
   }
 
@@ -194,17 +217,18 @@
     async addVideo({ title, desc, module, url, file }) {
       if (!String(title || "").trim()) throw new Error("El título es obligatorio.");
       if (!file && !String(url || "").trim()) throw new Error("Sube un archivo de video o pega un enlace.");
+      const cleanUrl = file ? null : C.checkHttpsUrl(url, "El enlace del video");
       const storage_path = file ? await uploadVideo(file) : null;
       const { data: last } = await sb.from("videos").select("position").order("position", { ascending: false }).limit(1);
       const position = (last?.[0]?.position ?? -1) + 1;
-      must(await sb.from("videos").insert({ title: title.trim(), description: String(desc || "").trim(), module: C.cleanModule(module), url: file ? null : url.trim(), storage_path, position }));
+      must(await sb.from("videos").insert({ title: title.trim(), description: String(desc || "").trim(), module: C.cleanModule(module), url: cleanUrl, storage_path, position }));
     },
     async updateVideo(id, { title, desc, module, url, file }) {
       if (!String(title || "").trim()) throw new Error("El título es obligatorio.");
       const old = must(await sb.from("videos").select("storage_path").eq("id", id).single());
       const row = { title: title.trim(), description: String(desc || "").trim(), module: C.cleanModule(module) };
       if (file) Object.assign(row, { storage_path: await uploadVideo(file), url: null });
-      else if (String(url || "").trim()) Object.assign(row, { storage_path: null, url: url.trim() });
+      else if (String(url || "").trim()) Object.assign(row, { storage_path: null, url: C.checkHttpsUrl(url, "El enlace del video") });
       must(await sb.from("videos").update(row).eq("id", id));
       // Si se reemplazó el archivo, borra el anterior para no ocupar espacio.
       if (old.storage_path && "storage_path" in row) await sb.storage.from("videos").remove([old.storage_path]);
@@ -306,12 +330,16 @@
       const newUrl = String(call.srcUrl || "").trim();
       if (file) {
         const ext = (file.name.split(".").pop() || "mp3").toLowerCase();
+        if (!AUDIO_EXTS.has(ext) || (file.type && !AUDIO_MIMES.has(file.type.toLowerCase()))) {
+          throw new Error("Formato de audio no permitido. Usa MP3, M4A, WAV u OGG.");
+        }
         row.storage_path = `${crypto.randomUUID()}.${ext}`;
         row.url = null;
-        const { error } = await sb.storage.from("calls").upload(row.storage_path, file, { contentType: file.type || "audio/mpeg" });
-        if (error) throw new Error(/exceeded|too large|maximum/i.test(error.message) ? "El audio es demasiado pesado para tu plan de Supabase." : error.message);
+        const contentType = AUDIO_MIMES.has((file.type || "").toLowerCase()) ? file.type : "audio/mpeg";
+        const { error } = await sb.storage.from("calls").upload(row.storage_path, file, { contentType });
+        if (error) throw new Error(/exceeded|too large|maximum/i.test(error.message) ? "El audio es demasiado pesado para tu plan de Supabase." : cleanDbError(error.message));
       } else if (newUrl && newUrl !== prev?.url) {
-        Object.assign(row, { storage_path: null, url: newUrl });
+        Object.assign(row, { storage_path: null, url: C.checkHttpsUrl(newUrl, "El enlace del audio") });
       }
       if (!file && !newUrl && !prev?.storage_path && !prev?.url) throw new Error("Sube el archivo de audio o pega un enlace.");
       if (call.id) must(await sb.from("model_calls").update(row).eq("id", call.id));

@@ -5,13 +5,18 @@
  */
 (function () {
   const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+  const PDFJS_SRI = "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e";
   const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
   const PDFLIB = "https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js";
+  const PDFLIB_SRI = "sha384-weMABwrltA6jWR8DDe9Jp5blk+tZQh7ugpCsF3JwSA53WZM9/14PjS5LAJNHNjAI";
+  const MAX_PDF_BYTES = 20 * 1024 * 1024;
 
   const scripts = {};
-  const loadScript = (src) => (scripts[src] ||= new Promise((res, rej) => {
+  const loadScript = (src, integrity) => (scripts[src] ||= new Promise((res, rej) => {
     const s = document.createElement("script");
-    s.src = src; s.onload = res; s.onerror = () => rej(new Error("No se pudo cargar una herramienta de PDF. Revisa tu conexión a internet."));
+    s.src = src;
+    if (integrity) { s.integrity = integrity; s.crossOrigin = "anonymous"; }
+    s.onload = res; s.onerror = () => rej(new Error("No se pudo cargar una herramienta de PDF. Revisa tu conexión a internet."));
     document.head.appendChild(s);
   }));
 
@@ -28,9 +33,15 @@
 
   // ---------- Leer el PDF ----------
   async function readPdf(file) {
-    await loadScript(PDFJS);
+    if (file.size > MAX_PDF_BYTES) throw new Error("El archivo PDF supera el límite permitido (20 MB).");
+    await loadScript(PDFJS, PDFJS_SRI);
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
-    const doc = await window.pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    const doc = await window.pdfjsLib.getDocument({
+      data: new Uint8Array(await file.arrayBuffer()),
+      isEvalSupported: false,
+      enableXfa: false,
+      disableFontFace: true,
+    }).promise;
     const pages = [];
     for (let p = 1; p <= doc.numPages; p++) {
       const { items } = await (await doc.getPage(p)).getTextContent();
@@ -233,7 +244,7 @@
       const d = state.data;
       if (!d.client) throw new Error("Escribe el nombre del cliente.");
       if (!d.premium || !d.deathBenefit) throw new Error("Faltan la prima o el death benefit.");
-      await loadScript(PDFLIB);
+      await loadScript(PDFLIB, PDFLIB_SRI);
       const logo = new Uint8Array(await (await fetch(BSIllustrationPdf.THEMES[d.carrier].logo)).arrayBuffer());
       const bytes = await BSIllustrationPdf.build(d, logo);
       if (state.pdfUrl) URL.revokeObjectURL(state.pdfUrl);

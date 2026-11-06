@@ -82,6 +82,10 @@
 
   // ---------- Arranque ----------
   async function boot() {
+    if (!window.BSData) {
+      $app.innerHTML = `<div class="cover"><div class="cover-card"><h2 class="cover-title">No se pudo conectar</h2><p class="cover-hint">El servicio de datos no está disponible en este momento. Revisa tu conexión a internet y recarga la página.</p></div></div>`;
+      return;
+    }
     localStorage.removeItem(SESSION);   // versiones anteriores la guardaban de forma permanente
     const id = sessionStorage.getItem(SESSION);
     me = id && !resetToken() ? await BSData.getUser(id) : null;

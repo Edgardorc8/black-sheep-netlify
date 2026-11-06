@@ -8,6 +8,7 @@
  */
 (function () {
   const LAMEJS = "https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js";
+  const LAMEJS_SRI = "sha384-xuasJXVcyv3hZq0eYpelEkBC8l4yufatZXDsKuyCU2rqfhDCb+ftuE/mSfZAteiK";
   const LEVELS = [
     ["easy", "Fácil", "Cliente abierto, una objeción suave", "~$0.10"],
     ["medium", "Medio", "2 o 3 objeciones reales", "~$0.20"],
@@ -39,7 +40,9 @@
   }
   const loadScript = (src) => new Promise((res, rej) => {
     if (document.querySelector(`script[src="${src}"]`)) return res();
-    const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = () => rej(new Error("No se pudo cargar el convertidor de audio."));
+    const s = document.createElement("script");
+    s.src = src; s.integrity = LAMEJS_SRI; s.crossOrigin = "anonymous";
+    s.onload = res; s.onerror = () => rej(new Error("No se pudo cargar el convertidor de audio."));
     document.head.appendChild(s);
   });
 
@@ -272,18 +275,24 @@
     };
   }
 
+  const clampNum = (v, max) => Math.min(max, Math.max(0, Math.round(Number(v) || 0)));
+
   function gradeHtml(r) {
     const { esc } = BS, g = r.grade;
     if (!g) return `<div class="empty"><p>No se pudo calificar esta llamada, pero puedes descargar el audio y la conversación.</p></div>`;
-    const color = g.puntaje >= 80 ? "pos" : g.puntaje >= 60 ? "gold" : "neg";
+    const score = clampNum(g.puntaje, 100);
+    const color = score >= 80 ? "pos" : score >= 60 ? "gold" : "neg";
     return `
       <div class="rp-score">
-        <div class="rp-score-num ${color}"><b>${g.puntaje}</b><span>/100</span></div>
+        <div class="rp-score-num ${color}"><b>${score}</b><span>/100</span></div>
         <div><span class="tag ${g.resultado === "Venta" || g.resultado === "Cita agendada" ? "st-active" : "st-pending"}">${esc(g.resultado)}</span>
           <p>${esc(g.resumen)}</p></div>
       </div>
-      <div class="rp-criteria">${(g.criterios || []).map((c) => `
-        <div><span>${esc(c.nombre)}</span><div class="bar"><i style="width:${(c.puntos / 10) * 100}%"></i></div><b>${c.puntos}/10</b><small>${esc(c.comentario)}</small></div>`).join("")}</div>
+      <div class="rp-criteria">${(g.criterios || []).map((c) => {
+        const pts = clampNum(c.puntos, 10);
+        return `
+        <div><span>${esc(c.nombre)}</span><div class="bar"><i style="width:${(pts / 10) * 100}%"></i></div><b>${pts}/10</b><small>${esc(c.comentario)}</small></div>`;
+      }).join("")}</div>
       <div class="rp-lists">
         <div><h4>Lo que hiciste bien</h4><ul>${(g.fortalezas || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
         <div><h4>Para mejorar</h4><ul>${(g.mejorar || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>
@@ -367,7 +376,7 @@
           <tbody>${sessions.map((s) => `<tr class="row-link" data-hist="${s.id}">
             <td class="nowrap muted">${new Date(s.createdAt).toLocaleDateString("es-MX", { day: "2-digit", month: "short" })}</td>
             <td><b>${esc(s.title)}</b></td><td class="hide-sm">${LEVEL_NAME[s.level] || ""}</td>
-            <td class="num"><b>${s.grade?.puntaje ?? "—"}</b></td><td class="hide-sm">${esc(s.grade?.resultado || "")}</td>
+            <td class="num"><b>${s.grade?.puntaje != null ? clampNum(s.grade.puntaje, 100) : "—"}</b></td><td class="hide-sm">${esc(s.grade?.resultado || "")}</td>
             <td class="num hide-sm">${money(s.cost)}</td></tr>`).join("")}</tbody>
         </table></div>
       </section>` : ""}`);

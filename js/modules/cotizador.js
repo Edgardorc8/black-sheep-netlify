@@ -41,6 +41,7 @@
   const ALL = SECTIONS.flatMap(([, f]) => f);
 
   let ssnVisible = false;
+  let ssnMem = "";   // Seguridad (#14): el SSN vive solo en memoria de la pestaña, nunca en sessionStorage/localStorage.
 
   // La ficha vive en sessionStorage, igual que la sesión: sigue al recargar o al ir y volver de
   // Integrity, y se borra al cerrar la página. Cada agente tiene la suya.
@@ -54,10 +55,21 @@
         .forEach((k) => store.removeItem(k));
     } catch {}
   }
-  const loadDraft = () => { dropOthers(); try { return JSON.parse(store.getItem(keyFor())) || {}; } catch { return {}; } };
-  const saveDraft = (d) => { try { store.setItem(keyFor(), JSON.stringify(d)); } catch {} };
+  const loadDraft = () => {
+    dropOthers();
+    let d = {};
+    try { d = JSON.parse(store.getItem(keyFor())) || {}; } catch { d = {}; }
+    if (d.ssn) { ssnMem ||= d.ssn; delete d.ssn; try { store.setItem(keyFor(), JSON.stringify(d)); } catch {} }
+    return { ...d, ssn: ssnMem };
+  };
+  const saveDraft = (d) => {
+    const { ssn = "", ...rest } = d || {};
+    ssnMem = ssn;
+    try { store.setItem(keyFor(), JSON.stringify(rest)); } catch {}
+  };
   function clearAll() {
     ssnVisible = false;
+    ssnMem = "";
     try {
       Object.keys(store).filter((k) => k === DRAFT_KEY || k.startsWith(DRAFT_KEY + "_")).forEach((k) => store.removeItem(k));
     } catch {}
