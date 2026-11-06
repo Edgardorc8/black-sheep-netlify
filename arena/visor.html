@@ -76,7 +76,14 @@
       ctl.autoRotate = !params.has("quieto");
       ctl.autoRotateSpeed = 1.2;
 
-      const g = (await carga.loadAsync(`assets/${caja.dataset.m}.glb?v=${version}`)).scene;
+      const g = (await carga.loadAsync(`assets/${caja.dataset.m === "oveja-1" ? "demo/oveja-1" : caja.dataset.m}.glb?v=${version}`)).scene;
+      g.traverse((o) => {
+        if (!o.isMesh || !o.material?.map) return;
+        o.material.map.colorSpace = THREE.SRGBColorSpace;
+        o.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        o.material.roughness = 0.36;
+        o.material.metalness = 0.08;
+      });
       const box = new THREE.Box3().setFromObject(g), tam = box.getSize(new THREE.Vector3()), centro = box.getCenter(new THREE.Vector3());
       g.position.sub(centro);
       scene.add(g);

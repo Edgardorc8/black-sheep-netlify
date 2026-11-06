@@ -60,6 +60,18 @@ h2 { margin: 0; font: 700 15px/1.2 var(--display); letter-spacing: .04em; text-t
 .periodos button[aria-selected="true"] { background: var(--accent); color: #0b0b0c; }
 
 .top-der { display: flex; align-items: center; gap: 10px; }
+.btn-vista {
+  height: 36px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid rgba(226,196,141,.45);
+  background: linear-gradient(180deg, rgba(176,141,87,.22), rgba(176,141,87,.08));
+  color: var(--accent-2); font: 700 12px var(--display); letter-spacing: .06em;
+  transition: transform .2s, border-color .2s, background .2s;
+}
+.btn-vista:hover { border-color: var(--accent-2); transform: translateY(-1px); }
+.btn-vista.modo-hd {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #0b0b0c; border-color: var(--accent-2);
+}
 .vivo { display: inline-flex; align-items: center; gap: 7px; font: 700 11px var(--display); letter-spacing: .16em; color: var(--ok); }
 .vivo i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: late 1.8s infinite; }
 .vivo.error { color: #e5847e; }
@@ -91,13 +103,22 @@ h2 { margin: 0; font: 700 15px/1.2 var(--display); letter-spacing: .04em; text-t
   text-shadow: 0 2px 12px rgba(0,0,0,.9);
 }
 .tag .tier {
-  display: inline-block; padding: 3px 12px; border-radius: 999px; margin-bottom: 6px;
-  font: 900 12px var(--display); letter-spacing: .22em; color: #0b0b0c; text-shadow: none;
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px; border-radius: 999px; margin-bottom: 6px;
+  font: 900 12px var(--display); letter-spacing: .18em; color: #0b0b0c; text-shadow: none;
 }
+.tag .trofeo-tag { width: 18px; height: 18px; object-fit: contain; filter: drop-shadow(0 1px 3px rgba(0,0,0,.45)); }
+.tag .fila-guerrero { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 2px; }
+.tag .avatar-tag {
+  width: 30px; height: 30px; border-radius: 50%; object-fit: cover;
+  border: 1.5px solid var(--accent-2); background: #141417;
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+.tag.t1 .avatar-tag { width: 36px; height: 36px; border-width: 2px; }
 .tag .n { font: 800 18px/1.1 var(--display); }
+.tag .arq { font: 600 11px/1.2 var(--display); color: var(--accent-2); letter-spacing: .06em; text-transform: uppercase; opacity: .9; margin-bottom: 2px; }
 .tag .ap { font: 900 22px/1.1 var(--display); font-variant-numeric: tabular-nums; }
 .tag .pol { color: var(--ink-2); font-size: 12px; }
-.tag.t1, .tag.t2, .tag.t3 { padding: 8px 16px 10px; border-radius: 14px; background: rgba(11,11,12,.72); border: 1px solid var(--line-2); backdrop-filter: blur(6px); }
+.tag.t1, .tag.t2, .tag.t3 { padding: 8px 16px 10px; border-radius: 14px; background: rgba(11,11,12,.78); border: 1px solid var(--line-2); backdrop-filter: blur(8px); }
 .tag.t1 { border-color: rgba(226,196,141,.55); box-shadow: 0 0 18px rgba(176,141,87,.12); }
 .tag.t1 .tier { background: linear-gradient(90deg, var(--accent), var(--accent-2)); box-shadow: 0 0 10px rgba(226,196,141,.25); }
 .tag.t1 .n { font-size: 24px; }
@@ -187,14 +208,15 @@ h2 { margin: 0; font: 700 15px/1.2 var(--display); letter-spacing: .04em; text-t
 .soldado:hover { transform: translateY(-2px); border-color: var(--accent); }
 .soldado.brilla { border-color: var(--accent-2); box-shadow: 0 0 0 1px var(--accent-2), 0 0 30px rgba(226,196,141,.25); }
 .escudo {
-  width: 52px; height: 58px; display: grid; place-items: center; position: relative;
+  width: 54px; height: 60px; display: grid; place-items: center; position: relative;
   background: linear-gradient(160deg, #3a3a40, #1c1c20);
   clip-path: polygon(50% 0, 100% 14%, 100% 58%, 50% 100%, 0 58%, 0 14%);
 }
 .escudo::before { content: ""; position: absolute; inset: 2px; clip-path: inherit; background: linear-gradient(160deg, #2b2b30, #121214); }
-.escudo img { position: relative; width: 26px; height: 26px; margin-top: -6px; opacity: .9; }
-.escudo b { position: absolute; bottom: 8px; font: 900 12px var(--display); color: var(--accent-2); }
+.escudo img { position: relative; width: 38px; height: 38px; border-radius: 50%; object-fit: cover; margin-top: -10px; border: 1px solid rgba(226,196,141,.4); }
+.escudo b { position: absolute; bottom: 5px; font: 900 11px var(--display); color: var(--accent-2); text-shadow: 0 1px 4px #000; }
 .soldado .n { font: 700 15px/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.soldado .arq-tropa { font: 600 11px/1.2 var(--display); color: var(--accent); letter-spacing: .04em; margin-bottom: 2px; }
 .soldado .ap { font: 800 18px var(--display); font-variant-numeric: tabular-nums; }
 .soldado .pol { color: var(--muted); font-size: 12px; }
 .soldado .riel { grid-column: 1 / -1; height: 4px; border-radius: 4px; background: #0b0b0c; overflow: hidden; }

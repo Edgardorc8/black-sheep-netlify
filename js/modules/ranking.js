@@ -76,7 +76,7 @@
         <iframe
           id="rkArenaFrame"
           class="rk-arena-frame"
-          src="arena/index.html?portal=1&demo=1"
+          src="arena/index.html?portal=1&demo=1&v=5"
           title="Arena 3D de ventas Black Sheep"
           allow="fullscreen"
         ></iframe>

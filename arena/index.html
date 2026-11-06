@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=5">
   <script type="importmap">
     { "imports": {
       "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
@@ -33,6 +33,7 @@
       <button role="tab" data-p="mes" aria-selected="true">Mes</button>
     </div>
     <div class="top-der">
+      <button class="btn-vista" id="btn-vista" title="Alternar entre Modelo 3D 360° y Arte HD Original">✨ 3D 360°</button>
       <span class="vivo" id="vivo"><i></i><span id="vivo-txt">EN VIVO</span></span>
       <span class="reloj" id="reloj"></span>
       <button class="icono" id="btn-sonido" title="Sonido al entrar una venta" aria-pressed="false">🔕</button>
@@ -121,7 +122,7 @@
     </div>
   </div>
 
-  <script src="config.js"></script>
-  <script type="module" src="app.js"></script>
+  <script src="config.js?v=5"></script>
+  <script type="module" src="app.js?v=5"></script>
 </body>
 </html>

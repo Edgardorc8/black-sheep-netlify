@@ -23,6 +23,29 @@ const FOCO_ANG = Number(new URLSearchParams(location.search).get("ang")) || 0;
 // DEMO / Full HD activado por defecto (texturas con anisotropía máxima, sombras 4096 en las 3 ovejas y TOP 1 corregido)
 const DEMO = !new URLSearchParams(location.search).has("low");
 
+// Catálogo de los 10 Guerreros HD del proyecto leaderboard-black-sheeps + Trofeos 3D
+const GUERREROS_HD = [
+  { slug: "01_sheep_alex", titulo: "Comandante Dorado" },
+  { slug: "02_sheep_sofia", titulo: "Hechicera Arcana" },
+  { slug: "03_sheep_diego", titulo: "Francotirador Cyber" },
+  { slug: "04_sheep_valeria", titulo: "Valquiria de Neón" },
+  { slug: "05_sheep_marcos", titulo: "Paladín Imperial" },
+  { slug: "06_sheep_elena", titulo: "Asesina de Sombras" },
+  { slug: "07_sheep_javier", titulo: "Berserker de Fuego" },
+  { slug: "08_sheep_mateo", titulo: "Centinela de Acero" },
+  { slug: "09_sheep_camila", titulo: "Arquera Astral" },
+  { slug: "10_sheep_lucas", titulo: "Señor de la Tormenta" },
+];
+const TROFEOS_HD = {
+  1: "assets/trophies/trophy_gold.png",
+  2: "assets/trophies/trophy_silver.png",
+  3: "assets/trophies/trophy_bronze.png",
+};
+function guerreroPorIndice(idx) {
+  return GUERREROS_HD[idx % GUERREROS_HD.length];
+}
+let modoVista = new URLSearchParams(location.search).get("vista") === "hd" ? "hd" : "3d";
+
 if (C.TITULO) $("titulo").textContent = C.TITULO;
 
 /* =====================================================================
@@ -30,36 +53,38 @@ if (C.TITULO) $("titulo").textContent = C.TITULO;
    ===================================================================== */
 const canvas = $("escena");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-renderer.setPixelRatio(Math.min(devicePixelRatio, movil ? 1.5 : 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, movil ? 1.75 : 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 0.95;
+renderer.toneMappingExposure = 1.16;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0b0b0c);
-scene.fog = new THREE.Fog(0x0b0b0c, 14, 34);
+scene.fog = new THREE.Fog(0x0b0b0c, 16, 38);
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
-scene.environmentIntensity = 0.38;
+scene.environmentIntensity = 0.72;
 
 const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
-const MIRA = new THREE.Vector3(0, 1.05, 0), MIRA_ANGOSTO = new THREE.Vector3(0, 0.4, 0);
+const MIRA = new THREE.Vector3(0, 1.25, 0), MIRA_ANGOSTO = new THREE.Vector3(0, 0.55, 0);
 
-// Con postproceso el antialias del canvas se pierde: el render target lleva su propio MSAA para bordes lisos
+// Con postproceso el antialias del canvas se pierde: el render target lleva su propio MSAA para bordes lisos en Full HD
 const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }));
+composer.setPixelRatio(Math.min(devicePixelRatio, movil ? 1.75 : 2));
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.28, 0.4, 1.0);
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.14, 0.3, 0.92);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
-// Luces
-scene.add(new THREE.HemisphereLight(0x8a7a60, 0x050506, 0.35));
-const rim = new THREE.DirectionalLight(0x7f8cff, 1.1);
+// Luces de estudio calibradas para máximo detalle sin quemar texturas
+scene.add(new THREE.HemisphereLight(0xfff0d8, 0x09090c, 0.65));
+const rim = new THREE.DirectionalLight(0x90a0ff, 1.35);
 rim.position.set(-4, 6, -8);
 scene.add(rim);
-const frente = new THREE.DirectionalLight(0xffe2b0, 0.55);
-frente.position.set(3, 5, 10);
+const frente = new THREE.DirectionalLight(0xfff2dc, 0.95);
+frente.position.set(2.5, 5.5, 10);
 scene.add(frente);
 
 function foco(x, z, color, intensidad, sombra) {
@@ -301,24 +326,53 @@ function asientoCorona(m, top, aro, altura) {
   return top.y - altura * 0.08;
 }
 
-function figura(tierKey, modelo, seed) {
+const texLoader = new THREE.TextureLoader();
+
+function crearLaminaHD(tierKey, slug) {
+  const alto = ALTURA[tierKey] * 1.05;
+  const ancho = alto * (896 / 1200);
+  const tex = texLoader.load(`assets/characters/${slug}/fullbody.png`);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex,
+    transparent: true,
+    alphaTest: 0.02,
+    side: THREE.DoubleSide,
+    toneMapped: false,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(ancho, alto), mat);
+  mesh.position.y = alto * 0.5;
+  return mesh;
+}
+
+function figura(tierKey, modelo, seed, idxGuerrero = 0) {
   const g = new THREE.Group();
   const fig = new THREE.Group();
+  const malla3D = new THREE.Group();
   // Modelos con esqueleto: SkeletonUtils clona también los huesos (un clone normal los comparte)
   const m = SkeletonUtils.clone(modelo.scene);
   m.traverse((o) => {
     if (!o.isMesh) return;
     o.castShadow = true;
-    o.receiveShadow = true;
+    // Evita auto-sombreado sucio sobre la cara/armadura que ya trae oclusión horneada en su textura 4K
+    o.receiveShadow = false;
     o.material = o.material.clone();
     // Malla todavía sin pintar: gris mate para que se vea la forma
     if (!o.material.map) { o.material.color = new THREE.Color(0x4a4744); o.material.roughness = 0.6; o.material.metalness = 0.1; }
-    // Acabado satinado con reflejo para los tres del podio (venían mate)
-    // HD: la textura se ve nítida aunque se mire de lado (filtro anisotrópico al máximo de la tarjeta)
-    if (DEMO && o.material.map) o.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    // HD: textura con espacio de color sRGB y filtro anisotrópico al máximo de la tarjeta gráfica
+    if (o.material.map) {
+      o.material.map.colorSpace = THREE.SRGBColorSpace;
+      o.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      o.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+      o.material.map.magFilter = THREE.LinearFilter;
+      o.material.map.needsUpdate = true;
+    }
     if (tierKey !== "r" && o.material.map) {
-      // (Sin clearcoat: con esta malla da pixeles NaN y el bloom pinta la arena de negro)
-      Object.assign(o.material, { roughness: 0.44, metalness: 0.12, envMapIntensity: 1.25 });
+      // Acabado satinado Full HD con nitidez de estudio
+      Object.assign(o.material, { roughness: 0.36, metalness: 0.08, envMapIntensity: 1.15 });
     }
     // La tropa: misma oveja en tono hierro oscuro para que todas se vean iguales
     if (tierKey === "r") o.material.color = new THREE.Color(0x6a6660);
@@ -333,7 +387,7 @@ function figura(tierKey, modelo, seed) {
   const centro = caja.getCenter(new THREE.Vector3());
   m.position.set(-centro.x * k, -caja.min.y * k, -centro.z * k);
   m.rotation.y = GIRO[tierKey];
-  fig.add(m);
+  malla3D.add(m);
   if (CORONA[tierKey]) {
     const top = coronilla(m, ALTURA[tierKey]);
     const ancho = ALTURA[tierKey] * ANCHO_CORONA[tierKey];
@@ -342,11 +396,20 @@ function figura(tierKey, modelo, seed) {
     const y = asientoCorona(m, top, ancho * 0.95, ALTURA[tierKey]);
     c.position.set(top.x, y - alto * 0.22 + (AJUSTE_CORONA[tierKey] || 0), top.z);
     c.rotation.x = -0.08;
-    fig.add(c);
+    malla3D.add(c);
     // Pegada al hueso de la cabeza para que se mueva con ella
     const cabeza = m.getObjectByName("cabeza");
-    if (cabeza) { fig.updateMatrixWorld(true); cabeza.attach(c); }
+    if (cabeza) { malla3D.updateMatrixWorld(true); cabeza.attach(c); }
   }
+  fig.add(malla3D);
+
+  // Lámina Full HD (896x1200 RGBA) de los personajes de leaderboard-black-sheeps sobre el podio 3D
+  const infoGuerrero = guerreroPorIndice(idxGuerrero);
+  const laminaHD = crearLaminaHD(tierKey, infoGuerrero.slug);
+  fig.add(laminaHD);
+  malla3D.visible = modoVista === "3d";
+  laminaHD.visible = modoVista === "hd";
+
   g.add(fig);
   // Animaciones (reposo en bucle; saludo, festejo y aplauso de vez en cuando)
   const mixer = new THREE.AnimationMixer(m);
@@ -366,9 +429,22 @@ function figura(tierKey, modelo, seed) {
   const ancla = new THREE.Object3D();
   ancla.position.y = ALTURA[tierKey] + 0.15;
   g.add(ancla);
-  Object.assign(g.userData, { fig, figY: 0, ancla, fase: semilla(seed)() * 10, salto: -99, tierKey, mixer, acciones,
-    proximoGesto: 4 + semilla(seed + 2)() * 8 });
+  Object.assign(g.userData, { fig, malla3D, laminaHD, figY: 0, ancla, fase: semilla(seed)() * 10, salto: -99, tierKey, mixer, acciones,
+    proximoGesto: 4 + semilla(seed + 2)() * 8, idxGuerrero });
   return g;
+}
+
+function aplicarModoVista() {
+  for (const g of SLOTS) {
+    if (!g.userData) continue;
+    if (g.userData.malla3D) g.userData.malla3D.visible = modoVista === "3d";
+    if (g.userData.laminaHD) g.userData.laminaHD.visible = modoVista === "hd";
+  }
+  const btn = $("btn-vista");
+  if (btn) {
+    btn.textContent = modoVista === "hd" ? "🖼️ Arte HD" : "✨ 3D 360°";
+    btn.classList.toggle("modo-hd", modoVista === "hd");
+  }
 }
 
 // Un gesto (saludo, festejo, aplauso) que entra suave sobre el reposo y regresa a él al terminar
@@ -403,12 +479,12 @@ async function montarEscena() {
   const MOD = { 1: mods[0], 2: mods[1], 3: mods[2] };
 
   const h1 = podio(0, 0, 1.25, 1.05, "oro");
-  const h2 = podio(-2.7, 0.55, 0.85, 0.92, "plata");
-  const h3 = podio(2.7, 0.55, 0.6, 0.92, "bronce");
+  const h2 = podio(-2.35, 0.45, 0.85, 0.92, "plata");
+  const h3 = podio(2.35, 0.45, 0.6, 0.92, "bronce");
   const base = [
     { tier: 1, x: 0, z: 0, y: h1, r: 1.05 },
-    { tier: 2, x: -2.7, z: 0.55, y: h2, r: 0.92 },
-    { tier: 3, x: 2.7, z: 0.55, y: h3, r: 0.92 },
+    { tier: 2, x: -2.35, z: 0.45, y: h2, r: 0.92 },
+    { tier: 3, x: 2.35, z: 0.45, y: h3, r: 0.92 },
   ];
   for (let i = 0; i < MAX_TROPA; i++) {
     const t = MAX_TROPA === 1 ? 0.5 : i / (MAX_TROPA - 1);
@@ -417,7 +493,7 @@ async function montarEscena() {
     base.push({ tier: "r", x, z, y: podio(x, z, 0.28, 0.55, "hierro") });
   }
   base.forEach((b, i) => {
-    const g = figura(b.tier, MOD[b.tier], 1000 + i * 37);
+    const g = figura(b.tier, MOD[b.tier], 1000 + i * 37, i);
     g.position.set(b.x, b.y, b.z);
     g.visible = false;
     scene.add(g);
@@ -439,9 +515,9 @@ async function montarEscena() {
   aroPiso.position.set(0, h1 + 0.012, 0);
   scene.add(aura, aroPiso);
 
-  foco(0, 0, 0xfff0d6, 8, true);
-  foco(-2.7, 0.55, 0xf0e6ff, 13, DEMO);
-  foco(2.7, 0.55, 0xffd2ad, 13, DEMO);
+  foco(0, 0, 0xfff0d6, 9.5, true);
+  foco(-2.35, 0.45, 0xf0e6ff, 14, DEMO);
+  foco(2.35, 0.45, 0xffd2ad, 14, DEMO);
   // Contraluz del color de cada puesto para que brille el borde de la figura
   for (const [color, x, z, fuerza] of [[0xa66bff, -3.6, -0.6, 4.5], [0xffc457, 0, -1.4, 4.5], [0xff9248, 3.6, -0.6, 4.5]]) {
     const l = new THREE.PointLight(color, fuerza, 6, 1.5);
@@ -467,12 +543,15 @@ async function montarEscena() {
 
 function ajustar() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
+  const pr = Math.min(devicePixelRatio, movil ? 1.75 : 2);
+  renderer.setPixelRatio(pr);
   renderer.setSize(w, h, false);
+  composer.setPixelRatio(pr);
   composer.setSize(w, h);
-  bloom.resolution.set(w, h);
+  bloom.resolution.set(w * pr, h * pr);
   camera.aspect = w / h;
   const angosto = w / h < 1.1;
-  camera.fov = angosto ? 52 : 36;
+  camera.fov = angosto ? 50 : 35;
   camera.updateProjectionMatrix();
 }
 addEventListener("resize", ajustar);
@@ -529,8 +608,17 @@ function ponerEtiquetas(ranking, subidas) {
     d.hidden = !a;
     if (!a) return;
     const sube = subidas[a.clave] ? `<span class="sube">▲${subidas[a.clave]}</span>` : "";
+    const gw = guerreroPorIndice(i);
+    const trofeo = TROFEOS_HD[i + 1];
     d.innerHTML = i < 3
-      ? `<div class="tier">TOP ${i + 1}</div><div class="n">${esc(a.nombre)}${sube}</div><div class="ap">${dinero(a.ap)}</div><div class="pol">${a.pol} póliza${a.pol === 1 ? "" : "s"}</div>`
+      ? `<div class="tier"><img class="trofeo-tag" src="${trofeo}" alt="">TOP ${i + 1}</div>
+         <div class="fila-guerrero">
+           <img class="avatar-tag" src="assets/characters/${gw.slug}/avatar.png" alt="">
+           <div class="n">${esc(a.nombre)}${sube}</div>
+         </div>
+         <div class="arq">${esc(gw.titulo)}</div>
+         <div class="ap">${dinero(a.ap)}</div>
+         <div class="pol">${a.pol} póliza${a.pol === 1 ? "" : "s"}</div>`
       : `<div class="tier">#${i + 1}</div><div class="n">${esc(a.nombre)}${sube}</div><div class="ap">${dinero(a.ap)}</div>`;
   });
 }
@@ -544,8 +632,8 @@ function anima() {
   tPrevio = t;
   const m = sinMovimiento ? 0 : 1;
 
-  // Cámara que respira despacio alrededor de la arena
-  const angosto = camera.aspect < 1.1, lejos = angosto ? 14 : 10.5;
+  // Cámara que respira despacio alrededor de la arena (más cerca para lucir el Full HD)
+  const angosto = camera.aspect < 1.1, lejos = angosto ? 11.8 : 8.5;
   const enfocada = FOCO && SLOTS[FOCO - 1];
   if (enfocada) {
     // Solo para revisar (?foco=1|2|3&ang=grados): cámara cerca de la cabeza de esa oveja
@@ -553,7 +641,7 @@ function anima() {
     camera.position.set(p.x + Math.sin(a) * 3.6, alto + 0.35, p.z + Math.cos(a) * 3.6);
     camera.lookAt(p.x, alto, p.z);
   } else {
-    camera.position.set(Math.sin(t * 0.12) * 0.9 * m, 3.4 + Math.sin(t * 0.2) * 0.15 * m, lejos);
+    camera.position.set(Math.sin(t * 0.12) * 0.75 * m, 3.25 + Math.sin(t * 0.2) * 0.12 * m, lejos);
     camera.lookAt(angosto ? MIRA_ANGOSTO : MIRA);
   }
 
@@ -561,15 +649,20 @@ function anima() {
     if (!g.visible) continue;
     const u = g.userData, f = t + u.fase;
     // De frente a la cámara, con un vaivén lento para que se luzca el volumen
-    g.rotation.y = Math.atan2(camera.position.x - g.position.x, camera.position.z - g.position.z) * 0.7 + Math.sin(f * 0.45) * 0.35 * m;
+    const oscilacion = modoVista === "hd" ? 0.14 : 0.35;
+    g.rotation.y = Math.atan2(camera.position.x - g.position.x, camera.position.z - g.position.z) * 0.75 + Math.sin(f * 0.45) * oscilacion * m;
     const s = t - u.salto;
     const brinco = s >= 0 && s < 2.4 ? Math.abs(Math.sin(s * Math.PI * 1.25)) * 0.7 * (1 - s / 2.4) : 0;
-    u.fig.position.y = u.figY + Math.sin(f * 1.6) * 0.025 * m + brinco;
+    u.fig.position.y = u.figY + Math.sin(f * 1.6) * 0.03 * m + brinco;
+    if (modoVista === "hd" && u.laminaHD) {
+      const resp = 1 + Math.sin(f * 1.8) * 0.018 * m;
+      u.laminaHD.scale.set(resp, 1 + Math.cos(f * 1.8) * 0.018 * m, 1);
+    }
     // Cada tanto cada guerrero da una vuelta sobre su eje para lucirse (uno a la vez);
     // si lo giraste tú, sigue con el impulso que le diste y a los 6 s vuelve de frente
     const vuelta = (t + SLOTS.indexOf(g) * 7) % 21;
     const manual = t - u.tocado < 6 || arrastre?.g === g;
-    const luce = !manual && vuelta < 3.2 && m ? (1 - Math.cos((vuelta / 3.2) * Math.PI)) * Math.PI : 0;
+    const luce = modoVista === "3d" && !manual && vuelta < 3.2 && m ? (1 - Math.cos((vuelta / 3.2) * Math.PI)) * Math.PI : 0;
     if (arrastre?.g !== g) {
       u.giro += u.vel * dt;
       u.vel *= Math.pow(0.12, dt);
@@ -579,7 +672,7 @@ function anima() {
         u.giro = resto * Math.pow(0.08, dt);
       }
     }
-    u.fig.rotation.y = (s >= 0 && s < 1.2 ? (1 - Math.pow(1 - s / 1.2, 3)) * Math.PI * 2 : luce) + u.giro;
+    u.fig.rotation.y = (s >= 0 && s < 1.2 ? (1 - Math.pow(1 - s / 1.2, 3)) * Math.PI * 2 : luce) + (modoVista === "3d" ? u.giro : Math.sin(u.giro) * 0.35);
     // Brazos: cada tanto un gesto propio del puesto (el campeón festeja, los demás saludan o aplauden)
     if (m && t > u.proximoGesto) {
       const i = SLOTS.indexOf(g);
@@ -806,16 +899,20 @@ function pintar() {
   const max = ranking[0] ? ranking[0].ap : 1;
   $("r-vacio").hidden = tropa.length > 0;
   $("r-sub").textContent = `${ranking.length} guerrero${ranking.length === 1 ? "" : "s"} · ${etiqueta}`;
-  $("tropa").innerHTML = tropa.map((a, i) => `
+  $("tropa").innerHTML = tropa.map((a, i) => {
+    const gw = guerreroPorIndice(i + 3);
+    return `
     <li class="soldado" data-n="${esc(a.clave)}">
-      <div class="escudo"><img src="assets/favicon.svg" alt=""><b>${i + 4}</b></div>
+      <div class="escudo"><img src="assets/characters/${gw.slug}/avatar.png" alt=""><b>#${i + 4}</b></div>
       <div>
         <div class="n">${esc(a.nombre)}${subidas[a.clave] ? `<span class="sube">▲${subidas[a.clave]}</span>` : ""}</div>
+        <div class="arq-tropa">${esc(gw.titulo)}</div>
         <div class="ap">${dinero(a.ap)}</div>
         <div class="pol">${a.pol} póliza${a.pol === 1 ? "" : "s"} · le faltan ${dinero(ranking[2].ap - a.ap + 1)} para el podio</div>
       </div>
       <div class="riel"><i data-w="${(a.ap / max) * 100}"></i></div>
-    </li>`).join("");
+    </li>`;
+  }).join("");
   requestAnimationFrame(() => document.querySelectorAll(".soldado .riel i").forEach((i) => (i.style.width = i.dataset.w + "%")));
 
   // Últimas ventas
@@ -952,6 +1049,11 @@ document.querySelectorAll(".periodos button").forEach((b) => b.addEventListener(
   periodo = b.dataset.p;
   pintar();
 }));
+$("btn-vista")?.addEventListener("click", () => {
+  modoVista = modoVista === "3d" ? "hd" : "3d";
+  aplicarModoVista();
+});
+aplicarModoVista();
 $("btn-sonido").addEventListener("click", (e) => {
   conSonido = !conSonido;
   e.currentTarget.textContent = conSonido ? "🔔" : "🔕";
